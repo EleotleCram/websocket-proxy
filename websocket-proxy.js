@@ -21,29 +21,45 @@ function decodeWebSocket (data){
     return output;
 }
 
-var server = net.createServer(function(socket) {
+var argv = process.argv.slice(2);
+if(argv.length === 3) {
 
-	var client = new net.Socket();
-	client.connect(13001, '172.27.225.89', function() {
+	var localPort = argv[0];
+	var remoteHost = argv[1];
+	var remotePort = argv[2];
+
+	var server = net.createServer(function(socket) {
+
+		var client = new net.Socket();
+		client.connect(remotePort, remoteHost, function() {
+		});
+
+		client.on('data', function(data) {
+			console.log('<' + (""+data).substring(2));
+			socket.write(data);
+		});
+
+		client.on('close', function() {
+			socket.end();
+		});
+
+		socket.on('data', function(data) {
+			console.log('>' + (((""+data).charCodeAt(0) == 0xFFFD) ? decodeWebSocket(data) : data));
+			client.write(data);
+		});
+
+		socket.on('close', function() {
+			client.end();
+		});
 	});
 
-	client.on('data', function(data) {
-		console.log('<' + (""+data).substring(2));
-		socket.write(data);
-	});
+	server.listen(localPort, 'localhost');
 
-	client.on('close', function() {
-		socket.end();
-	});
+	console.log("-=- Websocket Proxy -=-");
+	console.log("local port: ", localPort);
+	console.log("remote host: ", remoteHost);
+	console.log("remote port: ", remotePort);
 
-	socket.on('data', function(data) {
-		console.log('>' + (((""+data).charCodeAt(0) == 0xFFFD) ? decodeWebSocket(data) : data));
-		client.write(data);
-	});
-
-	socket.on('close', function() {
-		client.end();
-	});
-});
-
-server.listen(12345, 'localhost');
+} else {
+	console.log("Usage: ./websocket-proxy <local-port> <remote-host> <remote-port>");
+}
