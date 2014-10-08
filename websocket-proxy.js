@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var net = require('net');
 
 // From: http://stackoverflow.com/questions/8125507/how-can-i-send-and-receive-websocket-messages-on-the-server-side
